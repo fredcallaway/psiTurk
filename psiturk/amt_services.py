@@ -286,6 +286,25 @@ class MTurkServices(object):
                 LocaleValues=[{'Country': 'US'}]
             ))
 
+        config = PsiturkConfig()
+        config.load_config()
+
+        require_quals = config.get('HIT Configuration', 'require_quals', fallback=None)
+        if require_quals is not None:
+            for qual in require_quals.split(','):
+                quals.append(dict(
+                    QualificationTypeId=qual,
+                    Comparator='Exists'
+                ))
+
+        block_quals = config.get('HIT Configuration', 'block_quals', fallback=None)
+        if block_quals is not None:
+            for qual in block_quals.split(','):
+                quals.append(dict(
+                    QualificationTypeId=qual,
+                    Comparator='DoesNotExist'
+                ))
+
         # Create a HIT type for this HIT.
         hit_type = self.mtc.create_hit_type(
             Title=hit_config['title'],
@@ -297,9 +316,6 @@ class MTurkServices(object):
             QualificationRequirements=quals)
 
         # Check the config file to see if notifications are wanted.
-        config = PsiturkConfig()
-        config.load_config()
-
         try:
             url = config.get('Server Parameters', 'notification_url')
 
