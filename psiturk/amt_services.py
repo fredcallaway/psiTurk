@@ -367,7 +367,8 @@ class MTurkServices(object):
     @amt_service_response
     def check_balance(self):
         ''' Check balance '''
-        return self.mtc.get_account_balance()['AvailableBalance']
+        response = self.mtc.get_account_balance()
+        return response['AvailableBalance']
         
     @amt_service_response
     def create_hit(self, hit_config):
@@ -380,7 +381,7 @@ class MTurkServices(object):
     def expire_hit(self, hitid):
         ''' Expire HIT '''
         
-        time_in_past = datetime.datetime.now() + datetime.timedelta(-30)
+        time_in_past = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(-30)
         self.mtc.update_expiration_for_hit(
             HITId=hitid,
             ExpireAt=time_in_past

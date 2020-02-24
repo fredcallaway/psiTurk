@@ -13,7 +13,8 @@ from psiturk.models import Base as DBModel
 from functools import wraps
 from apscheduler.job import Job
 from apscheduler.triggers.base import BaseTrigger
-from datetime import datetime, timedelta
+import datetime
+import pytz
 from pytz.tzinfo import BaseTzInfo
 
 api_blueprint = Blueprint('api', __name__, url_prefix='/api')
@@ -39,7 +40,7 @@ class PsiturkJSONEncoder(JSONEncoder): # flask's jsonencoder class
                 'message': str(obj)
             }
         
-        if isinstance(obj, timedelta):
+        if isinstance(obj, datetime.timedelta):
             return str(obj)
         
         if isinstance(obj, MTurkHIT):
@@ -73,11 +74,15 @@ class ServicesManager(Resource):
     def get(self):
         _return = {
             'mode': 'unavailable', 
-            'codeversion': 'unavailable'
+            'codeversion': 'unavailable',
+            'amt_balance': 'unavailable',
+            'aws_access_key_id': 'unavailable'
         }
         try:
             _return['mode'] = services_manager.mode
             _return['codeversion'] = services_manager.codeversion
+            _return['amt_balance'] = services_manager.amt_balance
+            _return['aws_access_key_id'] = services_manager.config.get('AWS Access','aws_access_key_id')
         except PsiturkException:
             pass
         return _return
@@ -236,8 +241,8 @@ class TaskList(Resource):
                 args=[mode],
                 func=do_approve_all,
                 trigger='interval',
-                minutes=max(int(int(data['interval']) * 60), 30),
-                next_run_time=datetime.now()
+                minutes=max(int(float(data['interval']) * 60), 30),
+                next_run_time=datetime.datetime.now(pytz.utc)
             )
             return job, 201
             

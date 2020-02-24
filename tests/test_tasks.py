@@ -61,8 +61,10 @@ def test_campaign_goal_met_cancel(patch_aws_services, campaign, mocker, caplog, 
     
     import psiturk.experiment
     remove_job_mock = mocker.patch.object(psiturk.experiment.app.apscheduler, 'remove_job')
+    
     do_campaign_round(**campaign_args)
     remove_job_mock.assert_called()
+    assert not campaign.is_active
     
 def test_campaign_posts_hits(patch_aws_services, stubber, campaign, mocker, caplog):
     
@@ -84,4 +86,21 @@ def test_campaign_posts_hits(patch_aws_services, stubber, campaign, mocker, capl
     assert mocked_create_hit.call_count == 2
     mocked_create_hit.assert_any_call(num_workers=9, reward=campaign.hit_reward, duration=campaign.hit_duration_hours)
     mocked_create_hit.assert_any_call(num_workers=1, reward=campaign.hit_reward, duration=campaign.hit_duration_hours)
+    
+def test_task_approve_all(patch_aws_services, stubber, mocker, caplog):
+    
+    from psiturk.amt_services_wrapper import MTurkServicesWrapper
+    aws_services_wrapper = MTurkServicesWrapper()
+    
+    
+    import psiturk.tasks
+    mocker.patch.object(psiturk.tasks.TaskUtils, 'aws_services_wrapper', aws_services_wrapper)
+    mocked_approve_all = mocker.patch.object(aws_services_wrapper, 'approve_all_assignments')
+    
+    
+    from psiturk.tasks import do_approve_all
+    do_approve_all('sandbox')
+    
+    mocked_approve_all.assert_called_once()
+
     

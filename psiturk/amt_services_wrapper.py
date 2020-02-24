@@ -370,11 +370,8 @@ class MTurkServicesWrapper(object):
                 results.append(self.approve_local_assignment(assignment))
         return {'results': results, 'hit_id': hit_id}
 
-    def _get_local_submitted_assignments(self, hit_id=None, only_mturk=True):
-        query = Participant.query.filter(
-            or_(Participant.status == COMPLETED, Participant.status == SUBMITTED))
-        if only_mturk:
-            query = query.filter(Participant.mode == self.mode)
+    def _get_local_submitted_assignments(self, hit_id=None):
+        query = Participant.query.filter(Participant.status == SUBMITTED)
         if hit_id:
             query = query.filter(Participant.hitid == hit_id)
         assignments = query.all()
@@ -627,6 +624,10 @@ class MTurkServicesWrapper(object):
         mode = 'sandbox' if self.sandbox else 'live'
 
         result = {}
+        try:
+            float(amount)
+        except ValueError as e:
+            raise e
         if amount <= 0:
             raise BadBonusAmountError(amount, assignment_id=assignment_id)
         if not reason:
